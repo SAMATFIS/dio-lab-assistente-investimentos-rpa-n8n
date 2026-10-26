@@ -1,0 +1,109 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "8959f80b-1fa7-40e6-be07-b71e8dfc2b8e",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "70d9a0a5-f9db-4d7d-be97-7899c56b086a",
+      "name": "Webhook",
+      "webhookId": "8959f80b-1fa7-40e6-be07-b71e8dfc2b8e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const clientes = $input.first().json.body.clientes;\n\nreturn clientes.map(cliente => {\n  return {\n    json: cliente\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "610092a1-484e-48dc-887d-97ff0eb4283b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/digitalinnovationone/dio-lab-assistente-investimentos-rpa-n8n/main/docs/data.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "bf00beff-f7aa-4799-bb68-4f5a03624065",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtenemos los 10 clientes del primer nodo\nlet clientesItems;\ntry {\n  clientesItems = $('Code').all();\n} catch (e) {\n  try {\n    clientesItems = $('Código en JavaScript').all();\n  } catch (e2) {\n    clientesItems = $input.all();\n  }\n}\n\n// 2. Obtenemos el texto CSV de las inversiones\nconst csvTexto = $input.first().json.data || \"\";\nconst lineas = csvTexto.split('\\n').slice(1);\n\n// 3. Generamos la recomendación para cada uno de los 10 clientes\nreturn clientesItems.map(item => {\n  const cliente = item.json;\n  const perfilCliente = (cliente.Perfil || cliente.perfil || \"\").toLowerCase();\n\n  const inversiones = [];\n  for (const linea of lineas) {\n    const partes = linea.split(',');\n    if (partes.length >= 4) {\n      const perfil = partes[0].trim().toLowerCase();\n      const produto = partes[1].trim();\n      const minimo = partes[2].trim();\n      const rentabilidade = partes[3].trim();\n\n      if (perfil === perfilCliente) {\n        inversiones.push(`${produto} (Mín: R$ ${minimo}, Rentabilidad: ${rentabilidade})`);\n      }\n    }\n  }\n\n  const recomendacion = `Hola ${cliente.Nome || cliente.nome},\n\nHemos analizado tu perfil de inversionista: ${cliente.Perfil || cliente.perfil}.\nTu saldo actual disponible es: ${cliente.saldo || cliente.Saldo}.\n\nOpciones recomendadas para tu perfil:\n- ${inversiones.join('\\n- ')}\n\n¡Éxito en tus inversiones!`;\n\n  return {\n    json: {\n      ...cliente,\n      recomendacion: recomendacion\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "1d6ce064-ff2a-4af3-b0a1-15b09bba4c53",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1feb504c-cf58-4922-85a8-4acb8e52e3d2",
+  "meta": {
+    "instanceId": "36b44eb53f6c6f675d9e3c20d1813eef3f7272b3c7be2b5a48f3ebbe3998fe72"
+  },
+  "nodeGroups": [],
+  "id": "edGZ4iDCaEHUqpEJ",
+  "tags": []
+}
